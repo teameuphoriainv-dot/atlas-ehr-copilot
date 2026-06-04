@@ -1,8 +1,10 @@
 // Atlas extension config. Loaded into the background service worker.
 // The Non-Production Client ID is a sandbox identifier (not a secret) — safe to ship.
 self.ATLAS_CONFIG = {
-  // The Atlas backend (holds the Anthropic key, runs the agent loop).
-  apiBase: "http://localhost:3000",
+  // The Atlas backend (holds the Anthropic + Azure keys, runs the agent loop).
+  // Points at the deployed Vercel backend so the extension works on any computer.
+  // For local dev against `npm run dev`, change this to "http://localhost:3000".
+  apiBase: "https://ehr-copilot-gilt.vercel.app",
 
   // Epic R4 sandbox.
   fhirBaseUrl: "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4",
