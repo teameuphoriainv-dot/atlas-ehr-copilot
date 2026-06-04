@@ -36,21 +36,25 @@ export async function fhirGet<T>(path: string): Promise<T> {
 /** POST a new FHIR resource. Returns the created resource (with server-assigned id). */
 export async function fhirPost<T>(resourceType: string, body: unknown): Promise<T> {
   if (publicEnv.useMockFhir) return mockPost<T>(resourceType, body);
-  const res = await fetch(`${base()}/${resourceType}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/fhir+json",
-      Accept: "application/fhir+json",
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new FhirError(
-      `FHIR POST ${resourceType} failed: ${res.status} ${detail.slice(0, 200)}`,
-      res.status,
-    );
+
+  // The shared HAPI public server intermittently returns 412/5xx on writes — retry a few times.
+  let lastDetail = "";
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(`${base()}/${resourceType}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/fhir+json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (res.ok) return (await res.json()) as T;
+    lastStatus = res.status;
+    lastDetail = (await res.text().catch(() => "")).slice(0, 200);
+    if (![412, 429, 500, 502, 503].includes(res.status)) break; // non-retryable
+    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
   }
-  return (await res.json()) as T;
+  throw new FhirError(
+    `FHIR POST ${resourceType} failed after retries: ${lastStatus} ${lastDetail}`,
+    lastStatus,
+  );
 }

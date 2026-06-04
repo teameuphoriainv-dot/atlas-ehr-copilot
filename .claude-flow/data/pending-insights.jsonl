@@ -107,3 +107,6 @@
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/extension/background.js","timestamp":1780594837048,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/extension/content.js","timestamp":1780594898800,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/extension/README.md","timestamp":1780594918285,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/fhir/client.ts","timestamp":1780595530004,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/fhir/client.ts","timestamp":1780595867658,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/.env.local","timestamp":1780595873593,"sessionId":null}
