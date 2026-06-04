@@ -1,4 +1,5 @@
-import { getFhirEnv } from "@/lib/env";
+import { getFhirEnv, publicEnv } from "@/lib/env";
+import { mockGet, mockPost } from "@/mock/fhirServer";
 
 /**
  * Thin server-side FHIR client over fetch. JSON in/out, clear errors.
@@ -21,6 +22,7 @@ function base(): string {
 
 /** GET a FHIR resource or search query. `path` is relative, e.g. "Patient/123" or "Condition?subject=Patient/123". */
 export async function fhirGet<T>(path: string): Promise<T> {
+  if (publicEnv.useMockFhir) return mockGet<T>(path);
   const res = await fetch(`${base()}/${path}`, {
     headers: { Accept: "application/fhir+json" },
     cache: "no-store",
@@ -33,6 +35,7 @@ export async function fhirGet<T>(path: string): Promise<T> {
 
 /** POST a new FHIR resource. Returns the created resource (with server-assigned id). */
 export async function fhirPost<T>(resourceType: string, body: unknown): Promise<T> {
+  if (publicEnv.useMockFhir) return mockPost<T>(resourceType, body);
   const res = await fetch(`${base()}/${resourceType}`, {
     method: "POST",
     headers: {
