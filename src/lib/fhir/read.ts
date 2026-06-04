@@ -6,6 +6,7 @@ import type {
   FhirCondition,
   FhirMedication,
   FhirMedicationRequest,
+  FhirObservation,
   FhirPatient,
   FhirServiceRequest,
 } from "./types";
@@ -14,6 +15,7 @@ import type {
   OrderSummary,
   PatientContext,
   PatientListItem,
+  VitalSign,
 } from "@/lib/types";
 
 function conceptToCoded(concept?: CodeableConcept): CodedItem | null {
@@ -54,7 +56,7 @@ function bundleResources<T>(b: Bundle<T>): T[] {
 export async function getPatientContext(id: string): Promise<PatientContext> {
   const patient = await fhirGet<FhirPatient>(`Patient/${id}`);
 
-  const [conditions, meds, allergies, serviceReqs, medReqs] = await Promise.all([
+  const [conditions, meds, allergies, serviceReqs, medReqs, observations] = await Promise.all([
     fhirGet<Bundle<FhirCondition>>(`Condition?subject=Patient/${id}&_count=50`).catch(
       emptyBundle<FhirCondition>,
     ),
@@ -70,6 +72,9 @@ export async function getPatientContext(id: string): Promise<PatientContext> {
     fhirGet<Bundle<FhirMedicationRequest>>(
       `MedicationRequest?subject=Patient/${id}&_count=50`,
     ).catch(emptyBundle<FhirMedicationRequest>),
+    fhirGet<Bundle<FhirObservation>>(
+      `Observation?patient=Patient/${id}&category=vital-signs&_count=50`,
+    ).catch(emptyBundle<FhirObservation>),
   ]);
 
   const problems = bundleResources(conditions)
@@ -99,6 +104,22 @@ export async function getPatientContext(id: string): Promise<PatientContext> {
     })),
   ];
 
+  const vitals: VitalSign[] = bundleResources(observations)
+    .map((o) => {
+      const label = conceptToCoded(o.code)?.display ?? "Vital";
+      let value = "";
+      if (o.valueQuantity?.value != null) value = `${o.valueQuantity.value}${o.valueQuantity.unit ? " " + o.valueQuantity.unit : ""}`;
+      else if (o.valueString) value = o.valueString;
+      else if (o.component?.length) {
+        value = o.component
+          .map((c) => (c.valueQuantity?.value != null ? `${c.valueQuantity.value}` : ""))
+          .filter(Boolean)
+          .join("/");
+      }
+      return value ? { label, value } : null;
+    })
+    .filter((v): v is VitalSign => Boolean(v));
+
   return {
     id,
     displayName: patientName(patient),
@@ -107,6 +128,7 @@ export async function getPatientContext(id: string): Promise<PatientContext> {
     problems,
     medications,
     allergies: allergyItems,
+    vitals,
     orders,
   };
 }

@@ -14,6 +14,7 @@ const ctx: PatientContext = {
   problems: [{ code: "44054006", system: "snomed", display: "Type 2 diabetes" }],
   medications: [{ code: "860975", system: "rxnorm", display: "metformin" }],
   allergies: [{ code: "7980", system: "rxnorm", display: "penicillin" }],
+  vitals: [],
   orders: [],
 };
 

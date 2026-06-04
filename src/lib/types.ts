@@ -19,7 +19,14 @@ export interface PatientContext {
   problems: CodedItem[];
   medications: CodedItem[];
   allergies: CodedItem[];
+  vitals: VitalSign[]; // vital signs read from Observations
   orders: OrderSummary[]; // live orders read back from the chart
+}
+
+/** A vital sign for the chart's Vitals panel. */
+export interface VitalSign {
+  label: string;
+  value: string;
 }
 
 /** A placed order, summarized for the chart's Orders list. */

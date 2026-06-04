@@ -9,6 +9,7 @@ import type {
   FhirCondition,
   FhirMedication,
   FhirMedicationRequest,
+  FhirObservation,
   FhirPatient,
   FhirServiceRequest,
 } from "@/lib/fhir/types";
@@ -45,8 +46,33 @@ const allergies: FhirAllergyIntolerance[] = [
   },
 ];
 
-// Orders written during the session live here.
+function vital(display: string, value: number, unit: string): FhirObservation {
+  return {
+    resourceType: "Observation",
+    id: `v-${display.replace(/\s+/g, "")}`,
+    status: "final",
+    category: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "vital-signs" }] }],
+    code: { text: display },
+    valueQuantity: { value, unit },
+  };
+}
+
+const observations: FhirObservation[] = [
+  { resourceType: "Observation", id: "v-bp", status: "final", category: [{ coding: [{ code: "vital-signs" }] }], code: { text: "Blood pressure" }, valueString: "128/82 mmHg" },
+  vital("Heart rate", 76, "bpm"),
+  vital("Temperature", 98.6, "°F"),
+  vital("Respiratory rate", 16, "/min"),
+  vital("O2 saturation", 98, "%"),
+  vital("Weight", 72, "kg"),
+  vital("Height", 168, "cm"),
+  vital("BMI", 25.5, "kg/m²"),
+];
+
+// Resources written during the session live here, by type.
 const orders: (FhirServiceRequest | FhirMedicationRequest)[] = [];
+const sessionConditions: FhirCondition[] = [];
+const sessionAllergies: FhirAllergyIntolerance[] = [];
+const sessionObservations: FhirObservation[] = [];
 let seq = 1000;
 
 export function isMockId(id: string): boolean {
@@ -60,9 +86,11 @@ export function mockGet<T>(path: string): T {
   if (resource === `Patient/${DEMO_ID}`) return patient as T;
   if (resource === "Patient") return listBundle([patient]) as T;
 
-  if (resource === "Condition") return listBundle(conditions) as T;
+  if (resource === "Condition") return listBundle([...conditions, ...sessionConditions]) as T;
   if (resource === "MedicationStatement") return listBundle(medications) as T;
-  if (resource === "AllergyIntolerance") return listBundle(allergies) as T;
+  if (resource === "Observation")
+    return listBundle([...observations, ...sessionObservations]) as T;
+  if (resource === "AllergyIntolerance") return listBundle([...allergies, ...sessionAllergies]) as T;
   if (resource === "ServiceRequest")
     return listBundle(orders.filter((o) => o.resourceType === "ServiceRequest")) as T;
   if (resource === "MedicationRequest")
@@ -73,10 +101,11 @@ export function mockGet<T>(path: string): T {
 }
 
 export function mockPost<T>(resourceType: string, body: unknown): T {
-  const resource = { ...(body as object), id: `mock-${seq++}` } as
-    | FhirServiceRequest
-    | FhirMedicationRequest;
-  orders.push(resource);
+  const resource = { ...(body as object), id: `mock-${seq++}` } as Record<string, unknown>;
+  if (resourceType === "Condition") sessionConditions.push(resource as unknown as FhirCondition);
+  else if (resourceType === "AllergyIntolerance") sessionAllergies.push(resource as unknown as FhirAllergyIntolerance);
+  else if (resourceType === "Observation") sessionObservations.push(resource as unknown as FhirObservation);
+  else orders.push(resource as unknown as FhirServiceRequest);
   return resource as T;
 }
 

@@ -22,7 +22,7 @@ interface Msg {
 const CHIPS = [
   { icon: FileText, label: "Summarize patient", prompt: "Summarize this patient in 3 lines." },
   { icon: ListPlus, label: "Add a problem", prompt: "Add essential hypertension to the problem list." },
-  { icon: Activity, label: "Add an allergy", prompt: "Add a penicillin allergy." },
+  { icon: Activity, label: "Record a vital", prompt: "Record a blood pressure of 132/86 mmHg." },
   { icon: FlaskConical, label: "Order a CBC", prompt: "Order a CBC with differential." },
 ];
 
@@ -51,6 +51,7 @@ function mergeActions(ctx: PatientContext, actions: ProposedAction[]): PatientCo
     problems: [...ctx.problems],
     medications: [...ctx.medications],
     allergies: [...ctx.allergies],
+    vitals: [...ctx.vitals],
     orders: [...ctx.orders],
   };
   actions.forEach((a, i) => {
@@ -61,6 +62,17 @@ function mergeActions(ctx: PatientContext, actions: ProposedAction[]): PatientCo
       next.problems.push({ code: code || `new-${i}`, system, display });
     } else if (a.resourceType === "AllergyIntolerance") {
       next.allergies.push({ code: code || `new-${i}`, system, display });
+    } else if (a.resourceType === "Observation") {
+      const res = (a.resource ?? {}) as {
+        valueQuantity?: { value?: number; unit?: string };
+        valueString?: string;
+        component?: { valueQuantity?: { value?: number } }[];
+      };
+      let value = "";
+      if (res.valueQuantity?.value != null) value = `${res.valueQuantity.value}${res.valueQuantity.unit ? " " + res.valueQuantity.unit : ""}`;
+      else if (res.valueString) value = res.valueString;
+      else if (res.component?.length) value = res.component.map((c) => c.valueQuantity?.value).filter(Boolean).join("/");
+      next.vitals.push({ label: display, value: value || a.summary });
     }
   });
   return next;

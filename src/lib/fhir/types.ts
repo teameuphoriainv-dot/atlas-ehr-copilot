@@ -52,6 +52,18 @@ export interface FhirMedication {
   subject?: Reference;
 }
 
+export interface FhirObservation {
+  resourceType: "Observation";
+  id?: string;
+  status?: string;
+  category?: CodeableConcept[];
+  code?: CodeableConcept;
+  subject?: Reference;
+  valueQuantity?: { value?: number; unit?: string };
+  valueString?: string;
+  component?: { code?: CodeableConcept; valueQuantity?: { value?: number; unit?: string } }[];
+}
+
 export interface FhirAllergyIntolerance {
   resourceType: "AllergyIntolerance";
   id?: string;
