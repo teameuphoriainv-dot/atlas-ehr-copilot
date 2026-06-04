@@ -131,3 +131,6 @@
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/extension/content.js","timestamp":1780599765213,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/extension/content.js","timestamp":1780599778034,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/extension/content.js","timestamp":1780599791816,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/AgentChat.tsx","timestamp":1780600052749,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/FloatingAtlas.tsx","timestamp":1780600071192,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/EhrBackdrop.tsx","timestamp":1780600094545,"sessionId":null}

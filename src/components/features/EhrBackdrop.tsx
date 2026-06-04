@@ -55,6 +55,9 @@ export function EhrBackdrop({ context }: Props) {
           </span>
           <span className="font-semibold">Meridian Health</span>
           <span className="text-xs text-slate-400">EpicCare · Inpatient</span>
+          <span className="ml-1 rounded bg-amber-400/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900">
+            Demo · synthetic data
+          </span>
         </div>
         <nav className="hidden gap-5 text-sm text-slate-300 md:flex">
           {["Chart Review", "Orders", "Notes", "Results", "MAR"].map((t, i) => (

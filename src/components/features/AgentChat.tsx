@@ -1,0 +1,194 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { Sparkles, Send, FlaskConical, ListPlus, Activity, FileText } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import type { PatientContext } from "@/lib/types";
+
+interface ProposedAction {
+  resourceType: string;
+  summary: string;
+  resource: Record<string, unknown>;
+}
+interface Msg {
+  role: "user" | "atlas";
+  text: string;
+  actions?: ProposedAction[];
+  status?: "" | "writing" | "done" | "error" | "rejected";
+  result?: string;
+}
+
+const CHIPS = [
+  { icon: FileText, label: "Summarize patient", prompt: "Summarize this patient in 3 lines." },
+  { icon: ListPlus, label: "Add a problem", prompt: "Add essential hypertension to the problem list." },
+  { icon: Activity, label: "Record a vital", prompt: "Record a blood pressure of 128/82 mmHg." },
+  { icon: FlaskConical, label: "Order a CBC", prompt: "Order a CBC with differential." },
+];
+
+interface Props {
+  patientId: string | null;
+  patientName: string;
+  onWriteComplete: (ctx: PatientContext) => void;
+}
+
+export function AgentChat({ patientId, patientName, onWriteComplete }: Props) {
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
+  }, [messages, busy]);
+
+  async function ask(text: string) {
+    if (!text.trim() || !patientId || busy) return;
+    const history = messages
+      .slice(-6)
+      .map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
+    setMessages((m) => [...m, { role: "user", text }]);
+    setInput("");
+    setBusy(true);
+    try {
+      const r = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, patientId, history }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "Agent failed");
+      setMessages((m) => [
+        ...m,
+        { role: "atlas", text: d.reply || "(no reply)", actions: d.proposedActions || [], status: "" },
+      ]);
+    } catch (e) {
+      setMessages((m) => [...m, { role: "atlas", text: "Error: " + (e instanceof Error ? e.message : "failed") }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirm(idx: number) {
+    const msg = messages[idx];
+    if (!msg.actions || !patientId) return;
+    setMessages((m) => m.map((x, i) => (i === idx ? { ...x, status: "writing" } : x)));
+    try {
+      const r = await fetch("/api/agent/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientId, actions: msg.actions }),
+      });
+      const d = await r.json();
+      const w = (d.written || []).length;
+      setMessages((m) =>
+        m.map((x, i) =>
+          i === idx ? { ...x, status: r.ok ? "done" : "error", result: r.ok ? `Wrote ${w} item(s) to the chart.` : d.error } : x,
+        ),
+      );
+      if (r.ok) {
+        const pr = await fetch(`/api/patient?id=${encodeURIComponent(patientId)}`);
+        const pd = await pr.json();
+        if (pd.context) onWriteComplete(pd.context);
+      }
+    } catch {
+      setMessages((m) => m.map((x, i) => (i === idx ? { ...x, status: "error", result: "Write failed" } : x)));
+    }
+  }
+
+  function reject(idx: number) {
+    setMessages((m) => m.map((x, i) => (i === idx ? { ...x, actions: [], status: "rejected", result: "Rejected." } : x)));
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <div ref={threadRef} className="flex-1 overflow-auto pr-1">
+        {messages.length === 0 ? (
+          <div className="flex flex-col gap-3 py-2">
+            <p className="text-sm text-text-muted">
+              Ask anything about {patientName}, or tell me what to add to the chart. Try:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {CHIPS.map(({ icon: Icon, label, prompt }) => (
+                <button
+                  key={label}
+                  onClick={() => ask(prompt)}
+                  disabled={busy || !patientId}
+                  className="flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-2 text-left text-xs text-text transition-colors hover:border-primary hover:bg-primary-subtle/40 disabled:opacity-50"
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2.5 py-1">
+            {messages.map((m, i) => (
+              <div key={i} className="flex flex-col gap-1.5">
+                <div
+                  className={
+                    m.role === "user"
+                      ? "self-end max-w-[88%] rounded-lg rounded-br-sm bg-primary px-3 py-2 text-sm text-surface"
+                      : "self-start max-w-[90%] rounded-lg rounded-bl-sm bg-surface-alt px-3 py-2 text-sm text-text whitespace-pre-wrap"
+                  }
+                >
+                  {m.text}
+                </div>
+                {m.actions && m.actions.length > 0 && (
+                  <div className="self-start w-[90%] flex flex-col gap-1.5">
+                    {m.actions.map((a, j) => (
+                      <div key={j} className="rounded-md border border-border bg-surface p-2">
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-info">
+                          {a.resourceType}
+                        </div>
+                        <div className="text-sm text-text">{a.summary}</div>
+                      </div>
+                    ))}
+                    {m.status === "done" || m.status === "error" || m.status === "rejected" ? (
+                      <div className={`text-xs ${m.status === "done" ? "text-success" : "text-text-muted"}`}>
+                        {m.result}
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => confirm(i)} disabled={m.status === "writing"}>
+                          {m.status === "writing" ? "Writing…" : `Confirm ${m.actions.length}`}
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => reject(i)}>
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {busy && (
+              <div className="self-start flex items-center gap-1.5 rounded-lg bg-surface-alt px-3 py-2 text-sm text-text-muted">
+                <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" /> Atlas is working…
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-2 flex items-end gap-2">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              ask(input);
+            }
+          }}
+          placeholder="Ask Atlas anything…"
+          rows={1}
+          className="min-h-[40px] max-h-24 flex-1 resize-none rounded-md border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+        />
+        <Button size="md" onClick={() => ask(input)} disabled={busy || !input.trim()} aria-label="Send">
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
