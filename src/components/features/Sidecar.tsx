@@ -1,10 +1,15 @@
-import { Card } from "@/components/ui/Card";
+"use client";
 
-/**
- * Right pane — the Atlas sidecar that "sits inside" the EHR.
- * Phase 0: placeholder sections. Patient picker, order input, drafts,
- * confirm panel, and audit log are wired in Phases 1–2.
- */
+import { Card } from "@/components/ui/Card";
+import { PatientPicker } from "./PatientPicker";
+import type { PatientListItem } from "@/lib/types";
+
+interface Props {
+  patients: PatientListItem[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
@@ -16,7 +21,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function Sidecar() {
+/**
+ * The Atlas sidecar that "sits inside" the EHR.
+ * Phase 1: live patient picker. Order input, draft/confirm, and audit arrive in Phase 2.
+ */
+export function Sidecar({ patients, selectedId, onSelect }: Props) {
   return (
     <Card className="flex h-full flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -25,7 +34,7 @@ export function Sidecar() {
       </div>
 
       <Section title="Patient">
-        <p className="text-sm text-text-muted">Patient picker — coming in Phase 1.</p>
+        <PatientPicker patients={patients} selectedId={selectedId} onSelect={onSelect} />
       </Section>
 
       <Section title="Order">
