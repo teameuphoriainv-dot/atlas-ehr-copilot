@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Atlas — EHR Copilot",
+  "version": "0.1.0",
+  "description": "Draggable AI copilot overlay that turns plain-English intent into coded FHIR orders on top of any EHR.",
+  "action": { "default_title": "Toggle Atlas" },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://localhost:3000/*"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

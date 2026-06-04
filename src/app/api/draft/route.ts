@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getPatientContext } from "@/lib/fhir/read";
 import { toModelContext } from "@/lib/phi/isolate";
-import { draftOrdersStream } from "@/lib/agent/draftOrders";
+import { draftOrders, draftOrdersStream } from "@/lib/agent/draftOrders";
 import { addAudit } from "@/lib/audit/log";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,24 @@ export async function POST(req: NextRequest) {
       { error: "FHIR read failed", details: e instanceof Error ? e.message : String(e) },
       { status: 502 },
     );
+  }
+
+  // Non-streaming mode (?stream=0) — used by the browser extension / simple clients.
+  if (req.nextUrl.searchParams.get("stream") === "0") {
+    try {
+      const result = await draftOrders(text, modelContext);
+      addAudit({
+        patientRef: modelContext.patientRef,
+        action: "drafted",
+        orderSummaries: result.drafts.map((d) => d.display),
+      });
+      return NextResponse.json(result);
+    } catch (e) {
+      return NextResponse.json(
+        { error: "Model call failed", details: e instanceof Error ? e.message : String(e) },
+        { status: 502 },
+      );
+    }
   }
 
   // Stream the model's narration, then send the final structured result.
