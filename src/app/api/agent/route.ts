@@ -4,6 +4,7 @@ import { runAgent } from "@/lib/agent/runAgent";
 import { makeBuiltinFhir, makeRemoteFhir } from "@/lib/fhir/remote";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const bodySchema = z.object({
   message: z.string().min(1).max(2000),

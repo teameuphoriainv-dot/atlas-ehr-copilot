@@ -4,6 +4,7 @@ import { makeBuiltinFhir, makeRemoteFhir } from "@/lib/fhir/remote";
 import { addAudit } from "@/lib/audit/log";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const WRITABLE = ["ServiceRequest", "Condition", "Observation", "AllergyIntolerance"] as const;
 

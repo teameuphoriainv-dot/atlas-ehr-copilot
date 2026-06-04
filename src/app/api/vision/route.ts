@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAzureEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const bodySchema = z.object({
   // base64 image (raw or a data URL — the prefix is stripped).

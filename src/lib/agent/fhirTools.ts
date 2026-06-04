@@ -55,10 +55,11 @@ export const FHIR_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-export function buildAgentSystemPrompt(patientRef: string): string {
+export function buildAgentSystemPrompt(patientRef: string, snapshot?: string): string {
   return `You are Atlas, an agentic EHR copilot operating over a patient's chart via FHIR R4.
 
 Current patient: ${patientRef}. Scope every search to this patient (subject=${patientRef} or patient=${patientRef}).
+${snapshot ? `\nThe patient's current chart is ALREADY LOADED below (PHI-stripped). Use it directly and DO NOT call search_fhir again unless you need something not present here. Reason from this snapshot, then answer or propose writes immediately.\n\nCHART SNAPSHOT:\n${snapshot}\n` : ""}
 
 You can do ANYTHING the clinician asks with the chart:
 - Answer questions, summarize, and analyze trends — use search_fhir / read_fhir to gather data, then reason and respond.

@@ -38,11 +38,35 @@ export async function runAgent(opts: {
   const proposedActions: ProposedAction[] = [];
   const toolLog: string[] = [];
 
-  for (let round = 0; round < 6; round++) {
+  // Pre-load a PHI-stripped chart snapshot so the agent reasons in 1-2 rounds
+  // instead of many sequential searches (huge latency win).
+  let snapshot = "";
+  const ref = opts.patientRef;
+  try {
+    const [cond, obs, meds, alg, srv] = await Promise.all([
+      opts.fhir.search("Condition", `subject=${ref}&_count=50`).catch(() => null),
+      opts.fhir.search("Observation", `patient=${ref}&_count=50`).catch(() => null),
+      opts.fhir.search("MedicationStatement", `subject=${ref}&_count=50`).catch(() => null),
+      opts.fhir.search("AllergyIntolerance", `patient=${ref}&_count=50`).catch(() => null),
+      opts.fhir.search("ServiceRequest", `subject=${ref}&_count=50`).catch(() => null),
+    ]);
+    snapshot = JSON.stringify({
+      conditions: cond ? sanitizeBundle(cond) : null,
+      observations: obs ? sanitizeBundle(obs) : null,
+      medications: meds ? sanitizeBundle(meds) : null,
+      allergies: alg ? sanitizeBundle(alg) : null,
+      orders: srv ? sanitizeBundle(srv) : null,
+    }).slice(0, 9000);
+    toolLog.push("search Condition", "search Observation", "search AllergyIntolerance");
+  } catch {
+    /* fall back to on-demand tools */
+  }
+
+  for (let round = 0; round < 5; round++) {
     const resp = await client.messages.create({
       model: ANTHROPIC_MODEL,
       max_tokens: 2000,
-      system: buildAgentSystemPrompt(opts.patientRef),
+      system: buildAgentSystemPrompt(opts.patientRef, snapshot),
       tools: FHIR_TOOLS,
       messages,
     });
