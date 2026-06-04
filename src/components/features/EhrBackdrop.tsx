@@ -141,6 +141,26 @@ export function EhrBackdrop({ context, onContextChange }: Props) {
         <div className="lg:col-span-3">
           <div className="rounded border border-slate-200 bg-white">
             <div className="border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Labs / Results
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-3 sm:grid-cols-4 lg:grid-cols-8">
+              {(context?.labs ?? []).length === 0 ? (
+                <p className="text-sm text-slate-400">No lab results</p>
+              ) : (
+                context!.labs.map((l, i) => (
+                  <div key={`${l.label}-${i}`} className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-wide text-slate-400">{l.label}</span>
+                    <span className="text-sm font-semibold text-slate-700">{l.value}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-3">
+          <div className="rounded border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Orders
             </div>
             <div className="p-3">

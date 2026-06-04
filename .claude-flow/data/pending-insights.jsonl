@@ -177,3 +177,15 @@
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/EhrBackdrop.tsx","timestamp":1780602210252,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/Workspace.tsx","timestamp":1780602220482,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/AgentChat.tsx","timestamp":1780602235088,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/types.ts","timestamp":1780602353190,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/fhir/read.ts","timestamp":1780602366420,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/fhir/read.ts","timestamp":1780602373720,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/fhir/read.ts","timestamp":1780602386464,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/fhir/read.ts","timestamp":1780602397511,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/mock/fhirServer.ts","timestamp":1780602417761,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/mock/fhirServer.ts","timestamp":1780602428120,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/EhrBackdrop.tsx","timestamp":1780602441748,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/phi/isolate.test.ts","timestamp":1780602451677,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/AgentChat.tsx","timestamp":1780602460970,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/AgentChat.tsx","timestamp":1780602475064,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/AgentChat.tsx","timestamp":1780602484578,"sessionId":null}

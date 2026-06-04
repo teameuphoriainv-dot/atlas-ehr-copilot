@@ -15,6 +15,7 @@ const ctx: PatientContext = {
   medications: [{ code: "860975", system: "rxnorm", display: "metformin" }],
   allergies: [{ code: "7980", system: "rxnorm", display: "penicillin" }],
   vitals: [],
+  labs: [],
   orders: [],
 };
 

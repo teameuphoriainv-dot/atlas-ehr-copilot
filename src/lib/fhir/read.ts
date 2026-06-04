@@ -56,7 +56,7 @@ function bundleResources<T>(b: Bundle<T>): T[] {
 export async function getPatientContext(id: string): Promise<PatientContext> {
   const patient = await fhirGet<FhirPatient>(`Patient/${id}`);
 
-  const [conditions, meds, allergies, serviceReqs, medReqs, observations] = await Promise.all([
+  const [conditions, meds, allergies, serviceReqs, medReqs, observations, labObs] = await Promise.all([
     fhirGet<Bundle<FhirCondition>>(`Condition?subject=Patient/${id}&_count=50`).catch(
       emptyBundle<FhirCondition>,
     ),
@@ -74,6 +74,9 @@ export async function getPatientContext(id: string): Promise<PatientContext> {
     ).catch(emptyBundle<FhirMedicationRequest>),
     fhirGet<Bundle<FhirObservation>>(
       `Observation?patient=Patient/${id}&category=vital-signs&_count=50`,
+    ).catch(emptyBundle<FhirObservation>),
+    fhirGet<Bundle<FhirObservation>>(
+      `Observation?patient=Patient/${id}&category=laboratory&_count=50`,
     ).catch(emptyBundle<FhirObservation>),
   ]);
 
@@ -104,21 +107,25 @@ export async function getPatientContext(id: string): Promise<PatientContext> {
     })),
   ];
 
-  const vitals: VitalSign[] = bundleResources(observations)
-    .map((o) => {
-      const label = conceptToCoded(o.code)?.display ?? "Vital";
-      let value = "";
-      if (o.valueQuantity?.value != null) value = `${o.valueQuantity.value}${o.valueQuantity.unit ? " " + o.valueQuantity.unit : ""}`;
-      else if (o.valueString) value = o.valueString;
-      else if (o.component?.length) {
-        value = o.component
-          .map((c) => (c.valueQuantity?.value != null ? `${c.valueQuantity.value}` : ""))
-          .filter(Boolean)
-          .join("/");
-      }
-      return value ? { label, value } : null;
-    })
-    .filter((v): v is VitalSign => Boolean(v));
+  const mapObs = (bundle: Bundle<FhirObservation>): VitalSign[] =>
+    bundleResources(bundle)
+      .map((o) => {
+        const label = conceptToCoded(o.code)?.display ?? "Result";
+        let value = "";
+        if (o.valueQuantity?.value != null) value = `${o.valueQuantity.value}${o.valueQuantity.unit ? " " + o.valueQuantity.unit : ""}`;
+        else if (o.valueString) value = o.valueString;
+        else if (o.component?.length) {
+          value = o.component
+            .map((c) => (c.valueQuantity?.value != null ? `${c.valueQuantity.value}` : ""))
+            .filter(Boolean)
+            .join("/");
+        }
+        return value ? { label, value } : null;
+      })
+      .filter((v): v is VitalSign => Boolean(v));
+
+  const vitals = mapObs(observations);
+  const labs = mapObs(labObs);
 
   return {
     id,
@@ -129,6 +136,7 @@ export async function getPatientContext(id: string): Promise<PatientContext> {
     medications,
     allergies: allergyItems,
     vitals,
+    labs,
     orders,
   };
 }

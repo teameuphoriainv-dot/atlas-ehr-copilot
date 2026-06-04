@@ -57,6 +57,28 @@ function vital(display: string, value: number, unit: string): FhirObservation {
   };
 }
 
+function lab(display: string, value: number, unit: string): FhirObservation {
+  return {
+    resourceType: "Observation",
+    id: `l-${display.replace(/\s+/g, "")}`,
+    status: "final",
+    category: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "laboratory" }] }],
+    code: { text: display },
+    valueQuantity: { value, unit },
+  };
+}
+
+const labObservations: FhirObservation[] = [
+  lab("Hemoglobin A1c", 7.2, "%"),
+  lab("Glucose", 142, "mg/dL"),
+  lab("Creatinine", 0.9, "mg/dL"),
+  lab("eGFR", 88, "mL/min"),
+  lab("LDL cholesterol", 110, "mg/dL"),
+  lab("Hemoglobin", 13.5, "g/dL"),
+  lab("WBC", 6.2, "10³/µL"),
+  lab("Potassium", 4.1, "mmol/L"),
+];
+
 const observations: FhirObservation[] = [
   { resourceType: "Observation", id: "v-bp", status: "final", category: [{ coding: [{ code: "vital-signs" }] }], code: { text: "Blood pressure" }, valueString: "128/82 mmHg" },
   vital("Heart rate", 76, "bpm"),
@@ -88,8 +110,14 @@ export function mockGet<T>(path: string): T {
 
   if (resource === "Condition") return listBundle([...conditions, ...sessionConditions]) as T;
   if (resource === "MedicationStatement") return listBundle(medications) as T;
-  if (resource === "Observation")
-    return listBundle([...observations, ...sessionObservations]) as T;
+  if (resource === "Observation") {
+    const isLab = (o: FhirObservation) =>
+      o.category?.some((c) => c.coding?.some((cc) => cc.code === "laboratory"));
+    const all = [...observations, ...labObservations, ...sessionObservations];
+    if (query?.includes("category=laboratory")) return listBundle(all.filter(isLab)) as T;
+    if (query?.includes("category=vital-signs")) return listBundle(all.filter((o) => !isLab(o))) as T;
+    return listBundle(all) as T;
+  }
   if (resource === "AllergyIntolerance") return listBundle([...allergies, ...sessionAllergies]) as T;
   if (resource === "ServiceRequest")
     return listBundle(orders.filter((o) => o.resourceType === "ServiceRequest")) as T;

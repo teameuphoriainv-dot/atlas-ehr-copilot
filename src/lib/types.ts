@@ -20,6 +20,7 @@ export interface PatientContext {
   medications: CodedItem[];
   allergies: CodedItem[];
   vitals: VitalSign[]; // vital signs read from Observations
+  labs: VitalSign[]; // lab results read from Observations
   orders: OrderSummary[]; // live orders read back from the chart
 }
 

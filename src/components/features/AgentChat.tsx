@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Send, FlaskConical, ListPlus, Activity, FileText } from "lucide-react";
+import { Sparkles, Send, FlaskConical, ListPlus, Activity, FileText, ShieldAlert, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { mdToHtml } from "@/lib/markdown";
 import type { PatientContext } from "@/lib/types";
@@ -24,6 +24,8 @@ const CHIPS = [
   { icon: ListPlus, label: "Add a problem", prompt: "Add essential hypertension to the problem list." },
   { icon: Activity, label: "Record a vital", prompt: "Record a blood pressure of 132/86 mmHg." },
   { icon: FlaskConical, label: "Order a CBC", prompt: "Order a CBC with differential." },
+  { icon: ShieldAlert, label: "Find care gaps", prompt: "Review this patient for care gaps and propose any overdue orders to close them." },
+  { icon: ClipboardList, label: "Progress note", prompt: "Write a concise SOAP progress note for today's visit based on the chart." },
 ];
 
 interface Props {
@@ -52,6 +54,7 @@ function mergeActions(ctx: PatientContext, actions: ProposedAction[]): PatientCo
     medications: [...ctx.medications],
     allergies: [...ctx.allergies],
     vitals: [...ctx.vitals],
+    labs: [...ctx.labs],
     orders: [...ctx.orders],
   };
   actions.forEach((a, i) => {
