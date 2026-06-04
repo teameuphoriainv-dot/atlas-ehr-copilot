@@ -22,12 +22,20 @@ export interface PatientContext {
   vitals: VitalSign[]; // vital signs read from Observations
   labs: VitalSign[]; // lab results read from Observations
   orders: OrderSummary[]; // live orders read back from the chart
+  notes?: ClinicalNote[]; // notes the agent saved into the chart
 }
 
-/** A vital sign for the chart's Vitals panel. */
+/** A vital sign / lab result for the chart panels. */
 export interface VitalSign {
   label: string;
   value: string;
+}
+
+/** A clinical note saved into the chart by the agent. */
+export interface ClinicalNote {
+  title: string;
+  text: string;
+  at: number;
 }
 
 /** A placed order, summarized for the chart's Orders list. */

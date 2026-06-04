@@ -50,6 +50,28 @@ function ChartCard({
   );
 }
 
+/** A tiny deterministic trend sparkline from a numeric value (demo visual). */
+function Sparkline({ value }: { value: string }) {
+  const n = parseFloat(value);
+  if (Number.isNaN(n)) return null;
+  const factors = [0.85, 0.9, 0.93, 0.97, 0.99, 1];
+  const pts = factors.map((f, i) => n * f * (1 + (i % 2 ? -0.012 : 0.012)));
+  const min = Math.min(...pts);
+  const max = Math.max(...pts);
+  const range = max - min || 1;
+  const w = 52;
+  const h = 16;
+  const d = pts
+    .map((p, i) => `${((i / (pts.length - 1)) * w).toFixed(1)},${(h - ((p - min) / range) * h).toFixed(1)}`)
+    .join(" ");
+  const up = pts[pts.length - 1] >= pts[0];
+  return (
+    <svg width={w} height={h} className={up ? "text-rose-400" : "text-emerald-500"} aria-hidden>
+      <polyline points={d} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function EhrBackdrop({ context, onContextChange }: Props) {
   const editVital = (idx: number, value: string) => {
     if (!context || !onContextChange) return;
@@ -151,6 +173,7 @@ export function EhrBackdrop({ context, onContextChange }: Props) {
                   <div key={`${l.label}-${i}`} className="flex flex-col">
                     <span className="text-[10px] uppercase tracking-wide text-slate-400">{l.label}</span>
                     <span className="text-sm font-semibold text-slate-700">{l.value}</span>
+                    <Sparkline value={l.value} />
                   </div>
                 ))
               )}
@@ -184,6 +207,28 @@ export function EhrBackdrop({ context, onContextChange }: Props) {
             </div>
           </div>
         </div>
+
+        {context?.notes && context.notes.length > 0 && (
+          <div className="lg:col-span-3">
+            <div className="rounded border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Notes
+              </div>
+              <div className="flex flex-col divide-y divide-slate-100">
+                {context.notes.map((n, i) => (
+                  <div key={i} className={`p-3 ${i === 0 ? "atlas-new" : ""}`}>
+                    <div className="text-xs font-semibold text-slate-600">
+                      {n.title} · Atlas
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">
+                      {n.text.slice(0, 700)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

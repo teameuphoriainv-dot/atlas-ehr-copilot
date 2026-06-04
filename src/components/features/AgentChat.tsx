@@ -17,6 +17,8 @@ interface Msg {
   actions?: ProposedAction[];
   status?: "" | "writing" | "done" | "error" | "rejected";
   result?: string;
+  toolLog?: string[];
+  saved?: boolean;
 }
 
 const CHIPS = [
@@ -33,6 +35,17 @@ interface Props {
   patientName: string;
   context: PatientContext | null;
   onWriteComplete: (ctx: PatientContext) => void;
+}
+
+/** Turn the agent's tool log into short, readable chips showing what it did. */
+function traceChips(log: string[]): string[] {
+  const out: string[] = [];
+  for (const l of log) {
+    if (l.startsWith("search ")) out.push(`🔍 ${l.split(" ")[1]}`);
+    else if (l.startsWith("read ")) out.push(`📄 ${l.split(" ")[1].split("/")[0]}`);
+    else if (l.startsWith("propose ")) out.push(`✎ ${l.split(" ")[1].replace(":", "")}`);
+  }
+  return [...new Set(out)].slice(0, 6);
 }
 
 /** Build a chart item (display/code) from a proposed action's FHIR resource. */
@@ -114,7 +127,7 @@ export function AgentChat({ patientId, patientName, context, onWriteComplete }: 
       if (!r.ok) throw new Error(d.error ?? "Agent failed");
       setMessages((m) => [
         ...m,
-        { role: "atlas", text: d.reply || "(no reply)", actions: d.proposedActions || [], status: "" },
+        { role: "atlas", text: d.reply || "(no reply)", actions: d.proposedActions || [], status: "", toolLog: d.toolLog || [] },
       ]);
     } catch (e) {
       setMessages((m) => [...m, { role: "atlas", text: "Error: " + (e instanceof Error ? e.message : "failed") }]);
@@ -153,6 +166,13 @@ export function AgentChat({ patientId, patientName, context, onWriteComplete }: 
     setMessages((m) => m.map((x, i) => (i === idx ? { ...x, actions: [], status: "rejected", result: "Rejected." } : x)));
   }
 
+  function saveNote(idx: number) {
+    if (!context) return;
+    const note = { title: "Atlas note", text: messages[idx].text, at: Date.now() };
+    onWriteComplete({ ...context, notes: [note, ...(context.notes ?? [])] });
+    setMessages((ms) => ms.map((x, i) => (i === idx ? { ...x, saved: true } : x)));
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div ref={threadRef} className="flex-1 overflow-auto pr-1">
@@ -184,10 +204,30 @@ export function AgentChat({ patientId, patientName, context, onWriteComplete }: 
                     {m.text}
                   </div>
                 ) : (
-                  <div
-                    className="atlas-prose self-start max-w-[90%] rounded-lg rounded-bl-sm bg-surface-alt px-3 py-2 text-sm text-text"
-                    dangerouslySetInnerHTML={{ __html: mdToHtml(m.text) }}
-                  />
+                  <div className="flex flex-col gap-1 self-start max-w-[90%]">
+                    {m.toolLog && m.toolLog.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {traceChips(m.toolLog).map((t, k) => (
+                          <span key={k} className="rounded bg-primary-subtle/60 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div
+                      className="atlas-prose rounded-lg rounded-bl-sm bg-surface-alt px-3 py-2 text-sm text-text"
+                      dangerouslySetInnerHTML={{ __html: mdToHtml(m.text) }}
+                    />
+                    {context && (
+                      <button
+                        onClick={() => saveNote(i)}
+                        disabled={m.saved}
+                        className="self-start text-[11px] text-text-muted hover:text-primary disabled:text-success"
+                      >
+                        {m.saved ? "✓ Saved to chart" : "+ Save as note"}
+                      </button>
+                    )}
+                  </div>
                 )}
                 {m.actions && m.actions.length > 0 && (
                   <div className="self-start w-[90%] flex flex-col gap-1.5">
