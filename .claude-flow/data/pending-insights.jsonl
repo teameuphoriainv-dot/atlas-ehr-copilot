@@ -93,3 +93,10 @@
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/app/api/draft/route.ts","timestamp":1780593553567,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/hooks/useOrdering.ts","timestamp":1780593571733,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/OrderPanel.tsx","timestamp":1780593581898,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/hooks/useDrag.ts","timestamp":1780594114574,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/hooks/usePatientData.ts","timestamp":1780594122786,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/hooks/usePatientData.ts","timestamp":1780594155402,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/EhrBackdrop.tsx","timestamp":1780594179474,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/FloatingAtlas.tsx","timestamp":1780594198885,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/Workspace.tsx","timestamp":1780594400329,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/EhrBackdrop.tsx","timestamp":1780594483940,"sessionId":null}

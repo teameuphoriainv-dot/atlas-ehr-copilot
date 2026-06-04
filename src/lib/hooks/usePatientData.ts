@@ -21,21 +21,6 @@ export function usePatientData(): PatientData {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/patients")
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled && Array.isArray(d.patients)) setPatients(d.patients);
-      })
-      .catch(() => {
-        /* picker simply stays empty; selection by id still works */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const select = useCallback(async (id: string) => {
     setSelectedId(id);
     setLoading(true);
@@ -52,6 +37,24 @@ export function usePatientData(): PatientData {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/patients")
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !Array.isArray(d.patients)) return;
+        setPatients(d.patients);
+        // Auto-load the first (pinned demo) patient so the EHR shows a chart immediately.
+        if (d.patients[0]) void select(d.patients[0].id);
+      })
+      .catch(() => {
+        /* picker simply stays empty; selection by id still works */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [select]);
 
   const refresh = useCallback(() => {
     if (selectedId) void select(selectedId);
