@@ -7,8 +7,26 @@ import { addAudit } from "@/lib/audit/log";
 
 export const dynamic = "force-dynamic";
 
+const codedItem = z.object({
+  code: z.string(),
+  system: z.string(),
+  display: z.string(),
+});
+
+const modelContextSchema = z.object({
+  patientRef: z.string(),
+  ageBand: z.string().optional(),
+  sex: z.string().optional(),
+  problems: z.array(codedItem),
+  activeMedications: z.array(codedItem),
+  allergies: z.array(codedItem),
+});
+
+// Either provide a patientId (server reads + isolates FHIR) OR a pre-built coded
+// context (used by the extension, so raw PHI never reaches our server).
 const bodySchema = z.object({
-  patientId: z.string().min(1),
+  patientId: z.string().min(1).optional(),
+  context: modelContextSchema.optional(),
   text: z.string().min(1).max(1000),
 });
 
@@ -27,18 +45,30 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-  const { patientId, text } = parsed.data;
+  const { patientId, context, text } = parsed.data;
 
-  // FHIR read + PHI isolation happen up front (not streamed). Errors return JSON.
-  let modelContext;
-  try {
-    const ctx = await getPatientContext(patientId);
-    modelContext = toModelContext(ctx);
-  } catch (e) {
+  if (!patientId && !context) {
     return NextResponse.json(
-      { error: "FHIR read failed", details: e instanceof Error ? e.message : String(e) },
-      { status: 502 },
+      { error: "Provide either patientId or a coded context" },
+      { status: 400 },
     );
+  }
+
+  // Coded context provided by the client (extension) → use directly, no FHIR read.
+  // Otherwise read + PHI-isolate from FHIR server-side. Errors return JSON.
+  let modelContext;
+  if (context) {
+    modelContext = context;
+  } else {
+    try {
+      const ctx = await getPatientContext(patientId!);
+      modelContext = toModelContext(ctx);
+    } catch (e) {
+      return NextResponse.json(
+        { error: "FHIR read failed", details: e instanceof Error ? e.message : String(e) },
+        { status: 502 },
+      );
+    }
   }
 
   // Non-streaming mode (?stream=0) — used by the browser extension / simple clients.

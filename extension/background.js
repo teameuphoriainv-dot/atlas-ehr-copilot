@@ -1,29 +1,71 @@
 // Atlas extension background service worker.
-// Acts as a fetch proxy to the Atlas API (localhost:3000) so the content script
-// avoids page CSP / CORS. The Anthropic key + FHIR access stay in the Atlas server.
+// - Runs the SMART-on-FHIR auth (chrome.identity) against Epic.
+// - Proxies agent calls to the Atlas backend, passing the Epic token so the backend
+//   can read/write the real Epic chart while the Anthropic key stays server-side.
 
-const API_BASE = "http://localhost:3000";
+importScripts("config.js", "smart.js");
+
+function summary(session) {
+  if (!session) return { connected: false };
+  return { connected: true, patient: session.patient, fhirBaseUrl: session.fhirBaseUrl };
+}
+
+async function callApi(path, body) {
+  const res = await fetch(`${self.ATLAS_CONFIG.apiBase}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => null);
+  return { ok: res.ok, status: res.status, data };
+}
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg && msg.kind === "api") {
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}${msg.path}`, {
-          method: msg.method || "GET",
-          headers: msg.body ? { "Content-Type": "application/json" } : undefined,
-          body: msg.body ? JSON.stringify(msg.body) : undefined,
+  (async () => {
+    try {
+      if (msg.kind === "connect") {
+        const session = await self.SMART.connect(self.ATLAS_CONFIG);
+        sendResponse({ ok: true, ...summary(session) });
+      } else if (msg.kind === "status") {
+        sendResponse({ ok: true, ...summary(await self.SMART.getSession()) });
+      } else if (msg.kind === "disconnect") {
+        await self.SMART.disconnect();
+        sendResponse({ ok: true, connected: false });
+      } else if (msg.kind === "ocr") {
+        // Capture the visible tab and OCR it server-side via Azure Document Intelligence.
+        // The image only goes to our backend, never anywhere directly from the page.
+        const dataUrl = await chrome.tabs.captureVisibleTab({ format: "png" });
+        const r = await callApi("/api/vision", { image: dataUrl });
+        sendResponse(r.ok && r.data ? { ok: true, text: r.data.text || "" } : r);
+      } else if (msg.kind === "agent") {
+        const s = await self.SMART.getSession();
+        const fhir = s ? { baseUrl: s.fhirBaseUrl, token: s.accessToken } : undefined;
+        const r = await callApi("/api/agent", {
+          message: msg.message,
+          history: msg.history || [],
+          patientId: s ? s.patient : "screen",
+          ...(fhir ? { fhir } : {}),
         });
-        const data = await res.json().catch(() => null);
-        sendResponse({ ok: res.ok, status: res.status, data });
-      } catch (e) {
-        sendResponse({ ok: false, status: 0, data: { error: String(e) } });
+        sendResponse(r);
+      } else if (msg.kind === "execute") {
+        const s = await self.SMART.getSession();
+        if (!s) return sendResponse({ ok: false, data: { error: "Not connected" } });
+        const r = await callApi("/api/agent/execute", {
+          patientId: s.patient,
+          actions: msg.actions,
+          fhir: { baseUrl: s.fhirBaseUrl, token: s.accessToken },
+        });
+        sendResponse(r);
+      } else {
+        sendResponse({ ok: false, data: { error: "Unknown message" } });
       }
-    })();
-    return true; // keep the message channel open for the async response
-  }
+    } catch (e) {
+      sendResponse({ ok: false, data: { error: String(e && e.message ? e.message : e) } });
+    }
+  })();
+  return true; // async response
 });
 
-// Clicking the toolbar icon toggles the Atlas panel in the active tab.
 chrome.action.onClicked.addListener((tab) => {
   if (tab.id != null) chrome.tabs.sendMessage(tab.id, { kind: "toggle" });
 });
