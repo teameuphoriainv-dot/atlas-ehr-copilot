@@ -7,7 +7,7 @@ import { Sidecar } from "./Sidecar";
 
 /** The EHR workspace — holds patient selection state and wires the two panes together. */
 export function Workspace() {
-  const { patients, selectedId, context, loading, error, select, refresh } =
+  const { patients, selectedId, context, loading, error, select, refresh, setContext } =
     usePatientData();
 
   return (
@@ -32,7 +32,13 @@ export function Workspace() {
           />
         </section>
         <aside className="w-full md:w-[400px] md:shrink-0">
-          <Sidecar patients={patients} selectedId={selectedId} onSelect={select} />
+          <Sidecar
+            patients={patients}
+            selectedId={selectedId}
+            onSelect={select}
+            patientName={context?.displayName ?? "this patient"}
+            onChartRefresh={setContext}
+          />
         </aside>
       </main>
     </div>

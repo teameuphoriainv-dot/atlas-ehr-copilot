@@ -44,8 +44,9 @@ export interface ModelContext {
 export interface DraftOrder {
   kind: "lab" | "imaging" | "medication";
   display: string;
-  fhirResourceType: "ServiceRequest" | "MedicationRequest";
-  code: { system: string; code: string; display: string };
+  fhirResourceType?: "ServiceRequest" | "MedicationRequest";
+  // Absent when the draft only carries a clarifying question (needsClarification).
+  code?: { system: string; code: string; display: string };
   dose?: string;
   route?: string;
   frequency?: string;
