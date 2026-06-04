@@ -20,6 +20,7 @@ export function Workspace() {
         selectedId={selectedId}
         onSelect={select}
         patientName={context?.displayName ?? "this patient"}
+        context={context}
         onChartRefresh={setContext}
       />
     </div>

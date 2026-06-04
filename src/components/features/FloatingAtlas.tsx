@@ -12,6 +12,7 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   patientName: string;
+  context: PatientContext | null;
   onChartRefresh: (ctx: PatientContext) => void;
 }
 
@@ -21,6 +22,7 @@ export function FloatingAtlas({
   selectedId,
   onSelect,
   patientName,
+  context,
   onChartRefresh,
 }: Props) {
   const { pos, dragging, onPointerDown } = useDrag({ x: 0, y: 0 });
@@ -64,6 +66,7 @@ export function FloatingAtlas({
             <AgentChat
               patientId={selectedId}
               patientName={patientName}
+              context={context}
               onWriteComplete={onChartRefresh}
             />
           </div>

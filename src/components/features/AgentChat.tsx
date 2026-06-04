@@ -22,17 +22,51 @@ interface Msg {
 const CHIPS = [
   { icon: FileText, label: "Summarize patient", prompt: "Summarize this patient in 3 lines." },
   { icon: ListPlus, label: "Add a problem", prompt: "Add essential hypertension to the problem list." },
-  { icon: Activity, label: "Record a vital", prompt: "Record a blood pressure of 128/82 mmHg." },
+  { icon: Activity, label: "Add an allergy", prompt: "Add a penicillin allergy." },
   { icon: FlaskConical, label: "Order a CBC", prompt: "Order a CBC with differential." },
 ];
 
 interface Props {
   patientId: string | null;
   patientName: string;
+  context: PatientContext | null;
   onWriteComplete: (ctx: PatientContext) => void;
 }
 
-export function AgentChat({ patientId, patientName, onWriteComplete }: Props) {
+/** Build a chart item (display/code) from a proposed action's FHIR resource. */
+function actionLabel(a: ProposedAction): { display: string; code: string; system: string } {
+  const res = (a.resource ?? {}) as {
+    code?: { text?: string; coding?: { code?: string; system?: string; display?: string }[] };
+    medicationCodeableConcept?: { text?: string; coding?: { code?: string; system?: string; display?: string }[] };
+  };
+  const cc = res.code ?? res.medicationCodeableConcept ?? {};
+  const coding = cc.coding?.[0] ?? {};
+  return { display: cc.text ?? coding.display ?? a.summary, code: coding.code ?? "", system: coding.system ?? "" };
+}
+
+/** Optimistically merge confirmed writes into the chart (serverless store isn't shared). */
+function mergeActions(ctx: PatientContext, actions: ProposedAction[]): PatientContext {
+  const next: PatientContext = {
+    ...ctx,
+    problems: [...ctx.problems],
+    medications: [...ctx.medications],
+    allergies: [...ctx.allergies],
+    orders: [...ctx.orders],
+  };
+  actions.forEach((a, i) => {
+    const { display, code, system } = actionLabel(a);
+    if (a.resourceType === "ServiceRequest") {
+      next.orders.push({ id: `new-${i}-${display}`, resourceType: "ServiceRequest", display, code });
+    } else if (a.resourceType === "Condition") {
+      next.problems.push({ code: code || `new-${i}`, system, display });
+    } else if (a.resourceType === "AllergyIntolerance") {
+      next.allergies.push({ code: code || `new-${i}`, system, display });
+    }
+  });
+  return next;
+}
+
+export function AgentChat({ patientId, patientName, context, onWriteComplete }: Props) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -86,10 +120,9 @@ export function AgentChat({ patientId, patientName, onWriteComplete }: Props) {
           i === idx ? { ...x, status: r.ok ? "done" : "error", result: r.ok ? `Wrote ${w} item(s) to the chart.` : d.error } : x,
         ),
       );
-      if (r.ok) {
-        const pr = await fetch(`/api/patient?id=${encodeURIComponent(patientId)}`);
-        const pd = await pr.json();
-        if (pd.context) onWriteComplete(pd.context);
+      if (r.ok && context && msg.actions) {
+        // Optimistically reflect the writes in the chart (serverless mock store isn't shared).
+        onWriteComplete(mergeActions(context, msg.actions));
       }
     } catch {
       setMessages((m) => m.map((x, i) => (i === idx ? { ...x, status: "error", result: "Write failed" } : x)));
