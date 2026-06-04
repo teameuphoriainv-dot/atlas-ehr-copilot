@@ -23,7 +23,7 @@ interface Msg {
 
 const CHIPS = [
   { icon: FileText, label: "Summarize patient", prompt: "Summarize this patient in 3 lines." },
-  { icon: ListPlus, label: "Add a problem", prompt: "Add essential hypertension to the problem list." },
+  { icon: ListPlus, label: "Add a problem", prompt: "Add hyperlipidemia to the problem list." },
   { icon: Activity, label: "Record a vital", prompt: "Record a blood pressure of 132/86 mmHg." },
   { icon: FlaskConical, label: "Order a CBC", prompt: "Order a CBC with differential." },
   { icon: ShieldAlert, label: "Find care gaps", prompt: "Review this patient for care gaps and propose any overdue orders to close them." },
