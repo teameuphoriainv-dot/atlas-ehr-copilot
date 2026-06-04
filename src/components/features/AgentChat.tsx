@@ -96,11 +96,16 @@ export function AgentChat({ patientId, patientName, context, onWriteComplete }: 
     setMessages((m) => [...m, { role: "user", text }]);
     setInput("");
     setBusy(true);
+    // Include current on-screen vitals so the agent reasons over edited values.
+    const vitalsLine =
+      context && context.vitals.length
+        ? `Current on-screen vitals: ${context.vitals.map((v) => `${v.label} ${v.value}`).join(", ")}.\n\n`
+        : "";
     try {
       const r = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, patientId, history }),
+        body: JSON.stringify({ message: vitalsLine + text, patientId, history }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Agent failed");

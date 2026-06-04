@@ -14,7 +14,7 @@ export function Workspace() {
 
   return (
     <div className="relative h-screen overflow-hidden">
-      <EhrBackdrop context={context} />
+      <EhrBackdrop context={context} onContextChange={setContext} />
       <FloatingAtlas
         patients={patients}
         selectedId={selectedId}

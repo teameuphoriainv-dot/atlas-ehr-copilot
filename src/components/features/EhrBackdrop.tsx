@@ -10,6 +10,7 @@ import type { CodedItem, PatientContext } from "@/lib/types";
  */
 interface Props {
   context: PatientContext | null;
+  onContextChange?: (ctx: PatientContext) => void;
 }
 
 function ChartCard({
@@ -49,7 +50,12 @@ function ChartCard({
   );
 }
 
-export function EhrBackdrop({ context }: Props) {
+export function EhrBackdrop({ context, onContextChange }: Props) {
+  const editVital = (idx: number, value: string) => {
+    if (!context || !onContextChange) return;
+    const vitals = context.vitals.map((v, i) => (i === idx ? { ...v, value } : v));
+    onContextChange({ ...context, vitals });
+  };
   const seenOrders = useRef<Set<string> | null>(null);
   const seenProblems = useRef<Set<string> | null>(null);
   const [newOrders, setNewOrders] = useState<Set<string>>(new Set());
@@ -120,7 +126,11 @@ export function EhrBackdrop({ context }: Props) {
                 context!.vitals.map((v, i) => (
                   <div key={`${v.label}-${i}`} className="flex flex-col">
                     <span className="text-[10px] uppercase tracking-wide text-slate-400">{v.label}</span>
-                    <span className="text-sm font-semibold text-slate-700">{v.value}</span>
+                    <input
+                      value={v.value}
+                      onChange={(e) => editVital(i, e.target.value)}
+                      className="w-full rounded border border-transparent bg-transparent text-sm font-semibold text-slate-700 hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none"
+                    />
                   </div>
                 ))
               )}
