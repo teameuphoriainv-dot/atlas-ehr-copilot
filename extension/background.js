@@ -66,6 +66,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return true; // async response
 });
 
-chrome.action.onClicked.addListener((tab) => {
-  if (tab.id != null) chrome.tabs.sendMessage(tab.id, { kind: "toggle" });
+// Clicking the toolbar icon: inject the content script on demand (handles tabs that
+// were open before the extension loaded), then toggle. Errors on restricted pages
+// (chrome://, web store) are expected and swallowed.
+chrome.action.onClicked.addListener(async (tab) => {
+  if (tab.id == null) return;
+  try {
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
+  } catch {
+    /* restricted page — can't inject */
+  }
+  chrome.tabs.sendMessage(tab.id, { kind: "toggle" }).catch(() => {});
 });

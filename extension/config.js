@@ -10,7 +10,12 @@ self.ATLAS_CONFIG = {
   fhirBaseUrl: "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4",
   clientId: "a6534435-15cf-4f76-ab7f-e163ce17c6d8",
 
-  // Scopes — broad patient read + the writes Epic's sandbox allows (Condition/Observation/Allergy).
+  // Explicit per-resource scopes (Epic rejects the patient/*.read wildcard). Must match
+  // exactly the APIs registered on the Epic app.
   scope:
-    "openid fhirUser launch/patient offline_access patient/*.read patient/*.write",
+    "openid fhirUser launch/patient offline_access " +
+    "patient/Patient.read patient/Condition.read patient/Condition.write " +
+    "patient/Observation.read patient/Observation.write " +
+    "patient/AllergyIntolerance.read patient/AllergyIntolerance.write " +
+    "patient/MedicationRequest.read patient/ServiceRequest.read",
 };
