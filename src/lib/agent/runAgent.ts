@@ -28,8 +28,10 @@ export async function runAgent(opts: {
   patientRef: string;
   fhir: FhirClient;
 }): Promise<AgentTurn> {
-  const { ANTHROPIC_API_KEY, ANTHROPIC_MODEL } = getAnthropicEnv();
+  const { ANTHROPIC_API_KEY } = getAnthropicEnv();
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  // Fast model for the interactive agent loop (snappy demo).
+  const AGENT_MODEL = process.env.ATLAS_AGENT_MODEL || "claude-haiku-4-5-20251001";
 
   const messages: Msg[] = [
     ...(opts.history ?? []),
@@ -64,8 +66,8 @@ export async function runAgent(opts: {
 
   for (let round = 0; round < 5; round++) {
     const resp = await client.messages.create({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 2000,
+      model: AGENT_MODEL,
+      max_tokens: 1500,
       system: buildAgentSystemPrompt(opts.patientRef, snapshot),
       tools: FHIR_TOOLS,
       messages,
