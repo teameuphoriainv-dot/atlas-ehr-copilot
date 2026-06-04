@@ -6,7 +6,7 @@ import { addAudit } from "@/lib/audit/log";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const WRITABLE = ["ServiceRequest", "Condition", "Observation", "AllergyIntolerance"] as const;
+const WRITABLE = ["ServiceRequest", "Condition", "Observation", "AllergyIntolerance", "MedicationRequest"] as const;
 
 const actionSchema = z.object({
   resourceType: z.enum(WRITABLE),

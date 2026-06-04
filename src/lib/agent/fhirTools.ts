@@ -42,7 +42,7 @@ export const FHIR_TOOLS: Anthropic.Tool[] = [
       properties: {
         resourceType: {
           type: "string",
-          enum: ["ServiceRequest", "Condition", "Observation", "AllergyIntolerance"],
+          enum: ["ServiceRequest", "Condition", "Observation", "AllergyIntolerance", "MedicationRequest"],
         },
         summary: { type: "string", description: "Plain-English description of what will be created." },
         resource: {
@@ -63,12 +63,12 @@ ${snapshot ? `\nThe patient's current chart is ALREADY LOADED below (PHI-strippe
 
 You can do ANYTHING the clinician asks with the chart:
 - Answer questions, summarize, and analyze trends — use search_fhir / read_fhir to gather data, then reason and respond.
-- Make changes — orders (ServiceRequest), problems (Condition), results/vitals (Observation), allergies (AllergyIntolerance) — by calling propose_write. NEVER assume a write happened; the clinician must confirm it.
+- Make changes — orders (ServiceRequest), problems (Condition), results/vitals (Observation), allergies (AllergyIntolerance), medications (MedicationRequest) — by calling propose_write. NEVER assume a write happened; the clinician must confirm it.
 
 RULES:
 1. Gather before you answer: search/read the relevant resources rather than guessing.
 2. For anything that changes the chart, call propose_write with a complete, valid R4 resource and a clear summary. Do not claim it's done.
-3. For medications: note that MedicationRequest creation may be unavailable in this environment — if asked to order a med, propose it but mention it may require production access.
+3. For a medication, build a MedicationRequest with status "active", intent "order", and a medicationCodeableConcept (RxNorm) plus dosageInstruction text. Never guess a dose — if missing, ask briefly.
 4. Be concise and clinical. No hype, no emoji. Use correct codes (LOINC for labs/imaging, SNOMED for problems, RxNorm for meds) when proposing writes.
 5. You only ever see PHI-stripped, coded data — reason from codes and values.
 

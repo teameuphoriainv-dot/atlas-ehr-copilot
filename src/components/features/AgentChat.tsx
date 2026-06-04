@@ -76,6 +76,8 @@ function mergeActions(ctx: PatientContext, actions: ProposedAction[]): PatientCo
       next.orders.push({ id: `new-${i}-${display}`, resourceType: "ServiceRequest", display, code });
     } else if (a.resourceType === "Condition") {
       next.problems.push({ code: code || `new-${i}`, system, display });
+    } else if (a.resourceType === "MedicationRequest") {
+      next.medications.push({ code: code || `new-${i}`, system, display });
     } else if (a.resourceType === "AllergyIntolerance") {
       next.allergies.push({ code: code || `new-${i}`, system, display });
     } else if (a.resourceType === "Observation") {
