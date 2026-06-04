@@ -88,3 +88,8 @@
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/hooks/useVoice.ts","timestamp":1780592979234,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/agent/draftOrders.test.ts","timestamp":1780593028895,"sessionId":null}
 {"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/docs/product-roadmap.md","timestamp":1780593108976,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/.claude/projects/-Users-sriyanbodla/memory/project_atlas_ehr.md","timestamp":1780593430220,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/agent/draftOrders.ts","timestamp":1780593538461,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/app/api/draft/route.ts","timestamp":1780593553567,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/lib/hooks/useOrdering.ts","timestamp":1780593571733,"sessionId":null}
+{"type":"edit","file":"/Users/sriyanbodla/ehr-copilot/src/components/features/OrderPanel.tsx","timestamp":1780593581898,"sessionId":null}

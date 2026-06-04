@@ -42,12 +42,41 @@ export function useOrdering(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ patientId, text: requestText }),
         });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error ?? "Drafting failed");
-        setDrafts(Array.isArray(d.drafts) ? d.drafts : []);
-        setNarration(d.narration ?? "");
-        setStatus("drafted");
-        bumpAudit();
+
+        // Non-streaming JSON error (e.g. FHIR read failed) — handle directly.
+        const contentType = r.headers.get("Content-Type") ?? "";
+        if (!r.ok || !contentType.includes("text/event-stream")) {
+          const d = await r.json().catch(() => ({}));
+          throw new Error(d.error ?? "Drafting failed");
+        }
+
+        // Consume the SSE stream: narration deltas, then a final result (or error).
+        const reader = r.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const blocks = buffer.split("\n\n");
+          buffer = blocks.pop() ?? "";
+          for (const block of blocks) {
+            const eventLine = block.match(/^event: (.+)$/m)?.[1];
+            const dataLine = block.match(/^data: (.+)$/m)?.[1];
+            if (!eventLine || !dataLine) continue;
+            const data = JSON.parse(dataLine);
+            if (eventLine === "narration") {
+              setNarration(data.narration ?? "");
+            } else if (eventLine === "result") {
+              setDrafts(Array.isArray(data.drafts) ? data.drafts : []);
+              setNarration(data.narration ?? "");
+              setStatus("drafted");
+              bumpAudit();
+            } else if (eventLine === "error") {
+              throw new Error(data.error ?? "Drafting failed");
+            }
+          }
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Drafting failed");
         setStatus("error");

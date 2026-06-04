@@ -36,6 +36,13 @@ export function OrderPanel({ patientId, patientName, onChartRefresh }: Props) {
         loading={o.status === "drafting"}
       />
 
+      {o.status === "drafting" && o.narration && (
+        <p className="text-sm text-text" aria-live="polite">
+          {o.narration}
+          <span className="ml-0.5 animate-pulse text-text-muted">▍</span>
+        </p>
+      )}
+
       {o.status === "drafted" && o.drafts.length === 0 && (
         <p className="text-sm text-text-muted">
           Atlas couldn&apos;t map that to a known order. Try rephrasing.
