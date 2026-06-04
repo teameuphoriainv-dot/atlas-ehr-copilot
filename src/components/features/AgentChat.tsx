@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, Send, FlaskConical, ListPlus, Activity, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { mdToHtml } from "@/lib/markdown";
 import type { PatientContext } from "@/lib/types";
 
 interface ProposedAction {
@@ -124,16 +125,17 @@ export function AgentChat({ patientId, patientName, onWriteComplete }: Props) {
         ) : (
           <div className="flex flex-col gap-2.5 py-1">
             {messages.map((m, i) => (
-              <div key={i} className="flex flex-col gap-1.5">
-                <div
-                  className={
-                    m.role === "user"
-                      ? "self-end max-w-[88%] rounded-lg rounded-br-sm bg-primary px-3 py-2 text-sm text-surface"
-                      : "self-start max-w-[90%] rounded-lg rounded-bl-sm bg-surface-alt px-3 py-2 text-sm text-text whitespace-pre-wrap"
-                  }
-                >
-                  {m.text}
-                </div>
+              <div key={i} className="flex flex-col gap-1.5 atlas-fade-in">
+                {m.role === "user" ? (
+                  <div className="self-end max-w-[88%] rounded-lg rounded-br-sm bg-primary px-3 py-2 text-sm text-surface">
+                    {m.text}
+                  </div>
+                ) : (
+                  <div
+                    className="atlas-prose self-start max-w-[90%] rounded-lg rounded-bl-sm bg-surface-alt px-3 py-2 text-sm text-text"
+                    dangerouslySetInnerHTML={{ __html: mdToHtml(m.text) }}
+                  />
+                )}
                 {m.actions && m.actions.length > 0 && (
                   <div className="self-start w-[90%] flex flex-col gap-1.5">
                     {m.actions.map((a, j) => (

@@ -80,6 +80,40 @@ h4,
   outline-offset: 2px;
 }
 
+/* Demo motion: new chart items slide in and flash so writes are visible. */
+@keyframes atlas-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes atlas-flash {
+  0% { background-color: var(--color-primary-subtle); box-shadow: 0 0 0 2px var(--color-primary-subtle); }
+  100% { background-color: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+.atlas-new {
+  animation: atlas-slide-in 0.3s ease-out, atlas-flash 2.4s ease-out;
+  border-radius: 6px;
+}
+.atlas-fade-in {
+  animation: atlas-slide-in 0.25s ease-out;
+}
+
+/* Formatted agent replies. */
+.atlas-prose p { margin: 0 0 0.4rem; }
+.atlas-prose p:last-child { margin-bottom: 0; }
+.atlas-prose strong { font-weight: 600; color: var(--color-primary); }
+.atlas-prose em { font-style: italic; }
+.atlas-prose h4 { font-weight: 600; font-size: 0.875rem; margin: 0.2rem 0 0.3rem; }
+.atlas-prose ul { margin: 0.2rem 0 0.4rem; padding-left: 1rem; list-style: disc; }
+.atlas-prose li { margin: 0.1rem 0; }
+.atlas-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
